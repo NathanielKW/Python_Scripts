@@ -20,11 +20,12 @@ def addNewLineToMessageExpression(string):
 
     return ''.join(result)
 
-argLen = len(sys.argv)
-
 ######################
 # Main functionality #
 ######################
+
+argLen = len(sys.argv)
+
 if argLen < 2:
     print("No directory to update was provided")
 
@@ -49,37 +50,25 @@ elif argLen == 2:
             # finds splunk logger tags with message attribute
             if(re.search("^\s*<wuSplunkLogger:splunk-logger.+message=(\"|')", line)):
                 
-                # find message value in line and strip out all other characters
-                if(re.search("message='", line)):
-                    messageExpression = re.sub("(^.*message=')|('.*/>$)", '', line)
-                if(re.search('message="', line)):
-                    messageExpression = re.sub("(^.*message=\")|(\".*/>$)", '', line)
-                
-                
-                #messageExpression = re.sub("(^.*message=(\"|'))|((\"|').*/>$)", '', line)
-                # (^.*message=')|('.*/>$)
-                
-                # find p function evaluation for "env" and replace it with the new property evaluator
-                messageExpression = re.sub("p\(&quot;env&quot;\)", 'Mule::p("env")', messageExpression)
-                # replace every remaining p function with 'Mule::p()
-                messageExpression = re.sub("(?<!Mule::)(p\()(?=((\"|')\w+(\"|')\)))", "Mule::p(", messageExpression)
-
-                # replace all remaining '&quote' in messageExpression with double quote
-                messageExpression = re.sub("&quot;", '"', messageExpression)
-
-                messageExpression = addNewLineToMessageExpression(messageExpression)
-                
-
-                # strip out message attribute and target attributes and respective values from splunk logger tag
-                strippedLine = re.sub("( message=(\"|')#\[.*\](\"|'))|( message='(\w| |\.)*')|( target=(\"|')\w*(\"|'))|(\/\B)", '', line)
+                # replace all '&quote' in line with double quote 
+                strippedLine = re.sub("&quot;", '"', line)
                 
                 # replace instances of p() with Mule::p() in the stripped line
                 strippedLine = re.sub("(?<!Mule::)(p\()(?=((\"|')\w+(\"|')\)))", "Mule::p(", strippedLine)
-
-                # replace all remaining '&quote' in strippedLine with double quote in the stripped line 
-                strippedLine = re.sub("&quot;", '"', strippedLine)
                 
-                # find number of tabs, spaced tabs to append before our new xml tags
+                # find message value expression in line and strip out all other characters
+                if(re.search("message='", strippedLine)):
+                    messageExpression = re.sub("(^.*message=')|('.*/>$)", '', strippedLine)
+                else:
+                    messageExpression = re.sub("(^.*message=\")|(\".*/>$)", '', strippedLine)
+
+                # for display purposes, add newline char before every even occurrence of "++" in the message expression
+                messageExpression = addNewLineToMessageExpression(messageExpression)
+                
+                # strip out message and target attributes and their respective values from splunk logger tag
+                strippedLine = re.sub("( message=(\"|')#\[.*\](\"|'))|( message='(\w| |\.)*')|( target=(\"|')\w*(\"|'))|(\/\B)", '', strippedLine)
+                
+                # find number of tabs or spaced tabs to append before our new xml tags
                 numTabs = len(re.findall("(^\t)|(\t)\B", line))
                 numSpacedTabs = len(re.findall("(^    )|(    )\B", line))
                 tabPrefix = ""
