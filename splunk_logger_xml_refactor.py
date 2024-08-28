@@ -20,18 +20,7 @@ def addNewLineToMessageExpression(string):
 
     return ''.join(result)
 
-######################
-# Main functionality #
-######################
-
-argLen = len(sys.argv)
-
-if argLen < 2:
-    print("No directory to update was provided")
-
-elif argLen == 2:
-    
-    directory = sys.argv[1]
+def Main(directory):
     files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
 
     for file in files:
@@ -57,8 +46,14 @@ elif argLen == 2:
                 strippedLine = re.sub("(?<!Mule::)(p\()(?=((\"|')\w+(\"|')\)))", "Mule::p(", strippedLine)
                 
                 # find message value expression in line and strip out all other characters
+                
+                # single quoted message attribute value case
                 if(re.search("message='", strippedLine)):
                     messageExpression = re.sub("(^.*message=')|('.*/>$)", '', strippedLine)
+                # double quoted message attribute value with mule expression
+                elif (re.search("message=\"#\[", strippedLine)):
+                    messageExpression = re.sub("(^.*message=\")|((?<=\])(\".*/>$))", '', strippedLine) 
+                # double quoted message attribute value with no mule expression
                 else:
                     messageExpression = re.sub("(^.*message=\")|(\".*/>$)", '', strippedLine)
 
@@ -97,7 +92,21 @@ elif argLen == 2:
             f.writelines(newLines)
         f.close()
     
-    print("Finished Refactoring XML\n")
+    print("\nFinished Refactoring XML\n")
+
+######################
+# Main functionality #
+######################
+
+argLen = len(sys.argv)
+
+if argLen == 1:
+    directory = input("\nPlease enter the path to the desired /src/main/mule directory to refactor: ")
+    Main(directory)
+
+elif argLen == 2:
+    directory = sys.argv[1]
+    Main(directory)
 
 else:
     print("To many parameters provided.\nPlease run script as follows:\n'Python ExampleFile.xml")
