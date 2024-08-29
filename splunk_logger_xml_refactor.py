@@ -57,11 +57,18 @@ def Main(directory):
                 else:
                     messageExpression = re.sub("(^.*message=\")|(\".*/>$)", '', strippedLine)
 
+                # replace any occurence of 'attributes.requestPath with vars.requestPath
+                messageExpression = re.sub("attributes(?=\.requestPath)", 'vars', messageExpression)
+                
+                # look to see if its an error log and refactor the mapping if so
+                messageExpression = re.sub("payload\.errors(?= +as)", 'payload.errors[0].detail', messageExpression)
+                
                 # for display purposes, add newline char before every even occurrence of "++" in the message expression
                 messageExpression = addNewLineToMessageExpression(messageExpression)
+
                 
                 # strip out message and target attributes and their respective values from splunk logger tag
-                strippedLine = re.sub("( message=(\"|')#\[.*\](\"|'))|( message='(\w| |\.)*')|( target=(\"|')\w*(\"|'))|(\/\B)", '', strippedLine)
+                strippedLine = re.sub("( message=(\"|')#\[.*\](\"|'))|( message='[\w \.:\\\(\)-/]*')|( target=(\"|')\w*(\"|'))|(\/\B)", '', strippedLine)
                 
                 # find number of tabs or spaced tabs to append before our new xml tags
                 numTabs = len(re.findall("(^\t)|(\t)\B", line))
